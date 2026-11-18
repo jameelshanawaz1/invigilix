@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conflict Management | INVIGILIX</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .cm-card{background:#fff;padding:24px;border-radius:12px;margin-bottom:22px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+    .cm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end}
+    .cm-grid label{display:block;font-weight:600;margin-bottom:7px}.cm-grid input,.cm-grid select{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:7px}
+    .cm-btn{padding:11px 18px;border:0;border-radius:7px;background:#1e3a8a;color:#fff;font-weight:600;cursor:pointer}
+    .cm-note{padding:13px 15px;background:#eff6ff;border-left:4px solid #2563eb;border-radius:6px;color:#1e40af;margin:12px 0 18px}
+    .pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700}
+    .muted{color:#64748b;font-size:13px}
+    @media(max-width:760px){.cm-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <h2>INVIGILIX</h2><p class="sidebar-subtitle">Admin Panel</p>
+  <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('faculty_management') }}">Faculty Management</a>
+  <a href="{{ url_for('timetable_management') }}">Timetable Management</a>
+  <a href="{{ url_for('examination_management') }}">Examination Management</a>
+  <a href="{{ url_for('hall_management') }}">Hall Management</a>
+  <a href="{{ url_for('duty_allocation') }}">Duty Allocation</a>
+  <a href="{{ url_for('conflict_management') }}" class="active">Conflict Management</a>
+  <a href="{{ url_for('reports') }}">Reports</a>
+  <a href="{{ url_for('logout') }}">Logout</a>
+</div>
+<div class="main-content">
+  <div class="page-header"><div><h1>Conflict Management</h1><p>Review blocked allocations and record approved faculty leave.</p></div></div>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category,message in messages %}<div class="flash-message {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
+  <section class="cm-card">
+    <h2>Record Approved Faculty Leave</h2>
+    <p class="cm-note">A faculty member with approved leave on an examination date will be excluded from invigilation allocation for that date.</p>
+    <form method="POST" class="cm-grid">
+      <div><label for="faculty_id">Faculty member</label><select name="faculty_id" id="faculty_id" required><option value="">Select faculty</option>{% for f in faculty_list %}<option value="{{ f.id }}">{{ f.name }} — {{ f.department }}</option>{% endfor %}</select></div>
+      <div><label for="leave_date">Leave date</label><input type="date" name="leave_date" id="leave_date" required></div>
+      <div><label for="reason">Reason / note</label><input type="text" name="reason" id="reason" maxlength="250" placeholder="Optional note"></div>
+      <div><button class="cm-btn" type="submit">Save Approved Leave</button></div>
+    </form>
+  </section>
+  <section class="cm-card">
+    <h2>Faculty Leave Records</h2>
+    <div class="table-container"><table><thead><tr><th>Faculty</th><th>Date</th><th>Reason</th><th>Status</th></tr></thead><tbody>
+    {% for leave in leaves %}<tr><td>{{ leave.faculty_name }}</td><td>{{ leave.leave_date }}</td><td>{{ leave.reason or '—' }}</td><td><span class="pill">{{ leave.status }}</span></td></tr>{% else %}<tr><td colspan="4">No leave records have been added.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <section class="cm-card">
+    <h2>Blocked Allocation Attempts</h2><p class="muted">The system records each conflict reason when an administrator attempts an invalid allocation. The newest 200 records are shown.</p>
+    <div class="table-container"><table><thead><tr><th>Date</th><th>Examination</th><th>Faculty</th><th>Hall</th><th>Conflict</th><th>Details</th><th>Logged at</th></tr></thead><tbody>
+    {% for item in logs %}<tr><td>{{ item.duty_date }}<br>{{ item.start_time }}–{{ item.end_time }}</td><td>{{ item.exam_name or 'Deleted exam' }}</td><td>{{ item.faculty_name or 'Deleted faculty' }}</td><td>{{ item.hall_number or '—' }}</td><td><span class="pill">{{ item.conflict_type }}</span></td><td>{{ item.details }}</td><td>{{ item.created_at }}</td></tr>{% else %}<tr><td colspan="7">No scheduling conflicts have been recorded yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+</div>
+</body></html>
